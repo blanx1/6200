@@ -96,7 +96,7 @@
     document.title = title + ' · 6.200';
     const list = inConcept(concept);
     return header(title) + `<div id="xq-practice">
-      ${concept ? `<p class="xq-back"><a href="#">← All concepts</a> · <a href="#progress">Your progress</a></p><p>${esc(D.concepts.find(c => c.id === concept).description)}</p>` : ''}
+      ${concept ? `<p class="xq-back"><a href="#practice">← All concepts</a> · <a href="#progress">Your progress</a></p><p>${esc(D.concepts.find(c => c.id === concept).description)}</p>` : ''}
       ${summary(list, concept ? conceptName(concept) : 'Overall progress')}
       <div class="xq-practice-filters"><label>Show <select id="xq-status-filter"><option value="all">All questions</option><option value="unfinished">Unfinished</option><option value="attempted">Attempted, not complete</option><option value="complete">Completed</option></select></label><label>Search <input id="xq-practice-search" type="search" placeholder="Concept, problem, or answer part" value="${esc(search)}"></label></div>
       <p id="xq-filter-count" role="status"></p><div id="xq-practice-list"></div>${note}</div>`;
@@ -161,15 +161,17 @@
   }
 
   const scoreHtml = ok => `<span style="color:rgb(${ok ? '0,200,0' : '200,0,0'});font-weight:bolder;">${ok ? '100.00' : '0.00'}%</span>`;
+  const inlineMd = s => md(s).trim().replace(/^<p>([\s\S]*)<\/p>$/, '$1');
   function questionHtml(q) {
-    const s = state[q.id] || {}, spec = q.spec, n = esc(q.name);
+    const s = state[q.id] || {}, n = esc(q.name);
+    const spec = q.learn ? {...q.spec, prompt: inlineMd(q.spec.prompt), optionsHtml: (q.spec.options || []).map(inlineMd)} : q.spec;
     let input;
     if (spec.kind === 'multiplechoice') {
       const type = spec.renderer === 'checkbox' ? 'checkbox' : 'radio';
       const picked = s.a ? JSON.parse(s.a) : null;
       input = `<div aria-labelledby="catsoop_prompt_${n}" role="${type === 'radio' ? 'radiogroup' : 'group'}">${spec.options.map((o, k) => {
         const on = picked !== null && (type === 'radio' ? picked === k : picked[k]);
-        return `<div style="margin-bottom: 10px;"><input id="${n}_opts_${k}" name="${n}_opts" type="${type}" value="${k}"${on ? ' checked' : ''}/><label for="${n}_opts_${k}">${esc(o)}</label></div>`;
+        return `<div style="margin-bottom: 10px;"><input id="${n}_opts_${k}" name="${n}_opts" type="${type}" value="${k}"${on ? ' checked' : ''}/><label for="${n}_opts_${k}">${spec.optionsHtml ? spec.optionsHtml[k] : esc(o)}</label></div>`;
       }).join('')}</div>`;
     } else if (spec.kind === 'bigbox') {
       input = `<textarea aria-labelledby="catsoop_prompt_${n}" cols="80" id="${n}" rows="${spec.rows || 4}">${esc(s.a || '')}</textarea><br/>`;
@@ -182,13 +184,19 @@
       <div><span id="${n}_buttons">
         <button class="submit btn btn-catsoop" data-act="submit" style="margin-top: 10px;">Submit</button>
         <button class="viewanswer btn btn-catsoop" data-act="view" style="margin-top: 10px;">View Answer</button></span>
-        <span class="xq-score" role="status"></span>
+        <span class="xq-score" role="status">${s.a !== undefined && spec.kind !== 'bigbox' && (s.s === 'correct' || s.s === 'attempted') ? scoreHtml(s.s === 'correct') : ''}</span>
         <div class="nsubmits_left" role="status"><i>You have infinitely many submissions remaining.</i></div></div>
       <div class="xq-solution-container"><div class="xq-solution"></div></div>
       <div aria-atomic="true" class="xq-message" role="status"></div></div>`;
   }
   function solnHtml(q) {
-    const spec = q.spec, exam = D.pages[q.page].exam;
+    const spec = q.spec, exam = q.learn ? '' : D.pages[q.page].exam;
+    if (q.learn) {
+      const sol = spec.kind === 'multiplechoice'
+        ? (spec.renderer === 'checkbox' ? spec.options.filter((o, k) => spec.soln[k]).join(', ') : spec.soln)
+        : (spec.soln || '');
+      return `<b>Solution:</b> ${md(sol).replace(/^<p>|<\/p>\s*$/g, '')}` + (spec.why ? `<hr /><p><b>Explanation:</b></p>\n\n${md(spec.why)}` : '');
+    }
     let sol;
     if (spec.kind === 'multiplechoice') {
       sol = spec.renderer === 'checkbox' ? spec.options.filter((o, k) => spec.soln[k]).map(esc).join(', ') || '(none)' : esc(spec.soln);
@@ -196,9 +204,11 @@
     } else sol = `<b>Solution:</b> ${md(spec.soln)}`;
     return withFigs(sol + (spec.expl ? `<hr /><p><b>Explanation:</b></p>\n\n${md(spec.expl)}` : ''), exam);
   }
+  const afterChange = q => (q.learn ? learnAfter(q) : problemChrome(q.page));
   function badge(box, q) {
-    box.querySelector('.xq-question-progress').innerHTML =
-      `<a href="#c-${q.concept}">${esc(conceptName(q.concept))}</a> <span class="xq-status-label ${status(q)}">${statusName(q)}</span>`;
+    box.querySelector('.xq-question-progress').innerHTML = q.learn
+      ? `<span>${q.spec.quiz ? 'Unit quiz' : 'Check your understanding'}</span> <span class="xq-status-label ${status(q)}">${statusName(q)}</span>`
+      : `<a href="#c-${q.concept}">${esc(conceptName(q.concept))}</a> <span class="xq-status-label ${status(q)}">${statusName(q)}</span>`;
     if (!q.manual) return;
     let review = box.querySelector('.xq-review');
     if (!review) { review = document.createElement('div'); review.className = 'xq-review'; box.append(review); }
@@ -214,13 +224,14 @@
       sol.parentElement.className = 'xq-solution-container solution';
       sol.innerHTML = solnHtml(q); typeset(sol);
       (state[q.id] = state[q.id] || {s: 'new'}).v = true; save(); badge(box, q);
+      if (q.learn) learnAfter(q);
     });
     const inp = box.querySelector('input[type=text]');
     if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(box, q); });
     box.addEventListener('change', e => {
       if (e.target.classList.contains('xq-rev')) {
         const s = state[q.id] = state[q.id] || {};
-        s.s = e.target.checked ? 'reviewed' : 'attempted'; save(); badge(box, q); problemChrome(q.page);
+        s.s = e.target.checked ? 'reviewed' : 'attempted'; save(); badge(box, q); afterChange(q);
       }
     });
   }
@@ -243,7 +254,7 @@
       s.a = box.querySelector('textarea').value;
       if (s.s !== 'reviewed') s.s = s.a.trim() ? 'attempted' : s.s;
       save(); score.innerHTML = ''; msg.innerHTML = s.a.trim() ? '<i>Your answer was saved. Choose View Answer to compare it with the reference.</i>' : '';
-      badge(box, q); problemChrome(q.page);
+      badge(box, q); afterChange(q);
       return;
     } else {
       s.a = box.querySelector('input[type=text]').value;
@@ -254,7 +265,7 @@
     save();
     score.innerHTML = scoreHtml(ok);
     msg.textContent = text;
-    badge(box, q); problemChrome(q.page);
+    badge(box, q); afterChange(q);
   }
   function mountQuestions(pid) {
     document.querySelectorAll('#xq-problem .q').forEach(ph => {
@@ -270,10 +281,114 @@
     if (el) el.scrollIntoView({block: 'center'}); else window.scrollTo(0, 0);
   }
 
+  // ------------------------------------------------------------ Learn: course units
+  // Learn questions use the same question boxes and progress store; their ids are learn/<unit>/<name>.
+  // state['learn:<unit>'] = {at: index of the furthest step reached}
+  let LEARN = {course: []}, UNITS = {};
+  function unitQuestions(u) {
+    return u.steps.filter(s => s.type === 'check').map(s => byId['learn/' + u.id + '/' + s.q.name]);
+  }
+  const unitCounts = u => { const qs = unitQuestions(u); return {total: qs.length, done: qs.filter(done).length}; };
+  const unitState = u => (state['learn:' + u.id] = state['learn:' + u.id] || {at: 0});
+  function viewHome() {
+    document.title = '6.200 Exam Practice';
+    const units = LEARN.course.filter(c => c.unit).map(c => c.unit);
+    const lq = units.flatMap(unitQuestions), lc = {total: lq.length, done: lq.filter(done).length};
+    const pc = counts(Q);
+    const nextUnit = units.find(u => unitCounts(u).done < unitCounts(u).total) || units[0];
+    return header('6.200 Circuits & Electronics') + `<div id="xq-practice">
+      <p>Two ways to study: work through the course one idea at a time, or practice on problems from past 6.200 midterms and finals.</p>
+      <div class="xq-concept-grid">
+        <section class="xq-concept-card"><h2><a href="#learn">Learn the course</a></h2>
+          <p>Short lessons that follow the Fall 2026 lectures. Each idea comes with a question to check it, and each unit ends with a quiz.</p>
+          ${meter(lc.done, lc.total, 'Learn progress')}<div class="xq-concept-count">${lc.done} / ${lc.total} questions <span>${units.length} units</span></div>
+          <a href="${nextUnit ? '#u-' + nextUnit.id : '#learn'}">${lc.done ? 'Continue learning' : 'Start learning'} →</a></section>
+        <section class="xq-concept-card"><h2><a href="#practice">Practice past exams</a></h2>
+          <p>${D.pages ? Object.keys(D.pages).length : ''} problems from 12 past exams, grouped by concept and graded as you go.</p>
+          ${meter(pc.complete, pc.total, 'Practice progress')}<div class="xq-concept-count">${pc.complete} / ${pc.total} completed <span>${pc.total - pc.complete} remaining</span></div>
+          <a href="#practice">Practice by concept →</a></section>
+      </div>${note}</div>`;
+  }
+  function viewCourse() {
+    document.title = 'Learn · 6.200';
+    const weeks = [...new Set(LEARN.course.map(c => c.week))];
+    return header('Learn the course') + `<div id="xq-practice">
+      <p>Units follow the 6.200 Fall 2026 lecture schedule. Work through each unit's lessons in order; every step checks what you just read.</p>
+      ${weeks.map(w => `<h2>Week ${w}</h2><div class="xq-unit-list">${LEARN.course.filter(c => c.week === w).map(c => {
+        if (!c.unit) return `<section class="xq-practice-row xq-unit-later"><div class="xq-row-heading"><h3>${esc(c.title)}</h3><span>${esc(c.date)}</span></div><p class="xq-source">Coming later: lecture notes for this unit aren’t available yet.</p></section>`;
+        const u = c.unit, n = unitCounts(u);
+        return `<section class="xq-practice-row"><div class="xq-row-heading"><h3><a href="#u-${u.id}">${esc(u.title)}</a></h3><span>${n.done} / ${n.total} complete</span></div>
+          <p class="xq-source">Lecture: ${esc(c.title)} · ${esc(c.date)}</p><p>${esc(u.intro)}</p>${meter(n.done, n.total, u.title)}</section>`;
+      }).join('')}</div>`).join('')}${note}</div>`;
+  }
+  function viewUnit(u) {
+    document.title = u.title + ' · 6.200';
+    const list = LEARN.course.filter(c => c.unit).map(c => c.unit), i = list.indexOf(u);
+    return header(u.title) + `<div class="xq-meta"><div>Week ${u.week} · ${esc(u.lecture)} · ${esc(u.date)}</div>
+        <div class="xq-topics">Practice: <a class="xq-tag" href="#c-${u.practice}">${esc(conceptName(u.practice))}</a></div></div>
+      <div class="xq-back"><a href="#learn">Back to the course</a></div>
+      <div id="xq-problem-progress"></div><hr/>
+      <p class="xq-unit-intro">${esc(u.intro)}</p><div id="xq-steps"></div>
+      <div class="xq-nav">${i > 0 ? `<a href="#u-${list[i - 1].id}">← ${esc(list[i - 1].title)}</a>` : '<span></span>'}${i + 1 < list.length ? `<a href="#u-${list[i + 1].id}">${esc(list[i + 1].title)} →</a>` : '<span></span>'}</div>`;
+  }
+  const stepDone = (u, k) => { const s = u.steps[k]; if (s.type !== 'check') return true; const q = byId['learn/' + u.id + '/' + s.q.name]; return done(q) || !!(state[q.id] && state[q.id].v); };
+  function renderSteps(u) {
+    const box = $('#xq-steps'), st = unitState(u);
+    st.at = Math.min(st.at, u.steps.length - 1);
+    let html = '', quizShown = false;
+    for (let k = 0; k <= st.at; k++) {
+      const s = u.steps[k];
+      if (s.type === 'check' && s.q.quiz && !quizShown) { quizShown = true; html += `<h2 class="xq-quiz-head">Unit quiz</h2><p>Check that it all fits together.</p>`; }
+      if (s.type === 'read') html += `<section class="xq-lesson" id="xq-step-${k}"><h3>${esc(s.title)}</h3>${md(s.md)}</section>`;
+      else html += `<div class="q" data-k="${k}"></div>`;
+      if (k === st.at && k + 1 < u.steps.length) html += `<p class="xq-continue"><button class="btn btn-catsoop" id="xq-next"${stepDone(u, k) ? '' : ' disabled'}>Continue</button> <span class="xq-progress-note">${stepDone(u, k) ? '' : 'Answer the question (or choose View Answer) to continue.'}</span></p>`;
+    }
+    if (st.at === u.steps.length - 1 && stepDone(u, st.at)) {
+      const n = unitCounts(u), list = LEARN.course.filter(c => c.unit).map(c => c.unit), next = list[list.indexOf(u) + 1];
+      html += `<section class="xq-progress-overview xq-unit-done"><strong>${n.done === n.total ? 'Unit complete ✓' : 'You reached the end of this unit'}</strong>
+        <p>${n.done} / ${n.total} questions answered correctly.${n.done < n.total ? ' Questions you revealed instead of answering stay open; go back and try them again.' : ''}</p>
+        <p>${next ? `<a class="btn btn-catsoop" href="#u-${next.id}">Next unit: ${esc(next.title)}</a> ` : ''}<a href="#c-${u.practice}">Practice past exam problems on ${esc(conceptName(u.practice))} →</a></p></section>`;
+    }
+    box.innerHTML = withFigs(html, '');
+    box.querySelectorAll('.q').forEach(ph => {
+      const s = u.steps[+ph.dataset.k], q = byId['learn/' + u.id + '/' + s.q.name];
+      ph.outerHTML = questionHtml(q);
+      const el = document.getElementById('cs_qdiv_' + q.name);
+      badge(el, q); wire(el, q);
+    });
+    const nextBtn = $('#xq-next');
+    if (nextBtn) nextBtn.addEventListener('click', () => {
+      st.at++; save(); renderSteps(u);
+      const el = document.getElementById('xq-step-' + st.at) || document.getElementById('cs_qdiv_' + (u.steps[st.at].q || {}).name);
+      if (el) el.scrollIntoView({block: 'start', behavior: 'smooth'});
+    });
+    unitChrome(u);
+    typeset(box);
+  }
+  function unitChrome(u) {
+    const n = unitCounts(u), st = unitState(u);
+    $('#xq-problem-progress').innerHTML = `<div class="xq-context-links"><a href="#learn">← All units</a><a href="#c-${u.practice}">Practice this topic</a></div>
+      <div class="xq-progress-heading"><span><b>Step ${st.at + 1} of ${u.steps.length}</b></span><span>${n.done} / ${n.total} questions correct</span></div>${meter(st.at + 1, u.steps.length, u.title)}`;
+  }
+  function learnAfter(q) {
+    const u = UNITS[q.unit], st = unitState(u), k = u.steps.findIndex(s => s.type === 'check' && s.q.name === q.name);
+    if (k === st.at) {             // the current step just got answered: refresh the Continue button / end panel
+      const keepY = window.scrollY;
+      renderSteps(u);
+      window.scrollTo(0, keepY);
+    } else unitChrome(u);
+  }
+
   // ------------------------------------------------------------ router
   async function route() {
     const h = location.hash.replace(/^#/, '');
     let m;
+    if ((m = /^u-([\w-]+)$/.exec(h)) && UNITS[m[1]]) {
+      app.innerHTML = viewUnit(UNITS[m[1]]); renderSteps(UNITS[m[1]]); window.scrollTo(0, 0);
+      return;
+    }
+    if (h === 'learn') { app.innerHTML = viewCourse(); window.scrollTo(0, 0); return; }
+    if (h === '' ) { app.innerHTML = viewHome(); window.scrollTo(0, 0); return; }
     if ((m = /^p-(\w+)-(p\d+)$/.exec(h)) && D.pages[`${m[1]}/${m[2]}`]) {
       const pid = `${m[1]}/${m[2]}`;
       await loadFigs(m[1]);
@@ -311,8 +426,18 @@
     else src.removeAttribute('href');
   }
 
-  fetch('data.json').then(r => r.json()).then(data => {
-    D = data;
+  Promise.all([fetch('data.json').then(r => r.json()), fetch('learn.json').then(r => r.json()).catch(() => ({course: []}))]).then(([data, learn]) => {
+    D = data; LEARN = learn;
+    for (const c of LEARN.course) {
+      if (!c.unit) continue;
+      UNITS[c.unit.id] = c.unit;
+      for (const s of c.unit.steps) {
+        if (s.type !== 'check') continue;
+        const q = {id: `learn/${c.unit.id}/${s.q.name}`, unit: c.unit.id, name: s.q.name, learn: true, manual: false,
+          concept: c.unit.practice, prompt: s.q.prompt, spec: s.q};
+        byId[q.id] = q;
+      }
+    }
     for (const [pid, p] of Object.entries(D.pages)) {
       for (const name of p.order) {
         const spec = p.questions[name];
