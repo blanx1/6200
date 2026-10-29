@@ -55,6 +55,9 @@ mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 .xq-lesson{margin:1.4em 0 .6em}
 .xq-lesson h3{margin-top:1.2em}
 .xq-lesson table{margin:.8em 0}
+/* "> **Intuition:** …" / "> **Watch out:** …" callouts in lesson text */
+.xq-lesson blockquote{margin:1em 0;padding:.6em 1em;border-left:4px solid #3a75b8;background:rgba(58,117,184,.08);border-radius:0 6px 6px 0;font-style:normal}
+.xq-lesson blockquote p{margin:.3em 0}
 svg.xq-sch{display:block;margin:14px auto;width:100%;height:auto;background:#fff;border-radius:6px;padding:4px;color:#111}
 .xq-sch text{stroke:none;fill:currentColor;font:italic 15px "Times New Roman",Times,serif}
 .xq-sch .pm{font-style:normal;font-size:14px}
