@@ -47,4 +47,22 @@ table.xq-bits td.f{background:rgba(240,120,120,0.25)} table.xq-bits td.g{backgro
 /* Figures cropped from the exam PDFs: keep them on white so circuits read in dark mode. */
 img.xq-fig{display:block;max-width:100%;height:auto;margin:.8em auto;background:#fff;padding:6px;border-radius:6px;box-sizing:border-box}
 img.xq-fig.xq-key{outline:2px solid rgba(220,60,60,.5)}
+/* Long displayed equations scroll on their own instead of widening the page on phones. */
+mjx-container[display="true"]{overflow-x:auto;overflow-y:hidden;max-width:100%}
 .xq-part h3{margin-top:1.8em}
+
+/* Learn section: lessons, drawn schematics, step-by-step units */
+.xq-lesson{margin:1.4em 0 .6em}
+.xq-lesson h3{margin-top:1.2em}
+.xq-lesson table{margin:.8em 0}
+svg.xq-sch{display:block;margin:14px auto;width:100%;height:auto;background:#fff;border-radius:6px;padding:4px;color:#111}
+.xq-sch text{stroke:none;fill:currentColor;font:italic 15px "Times New Roman",Times,serif}
+.xq-sch .pm{font-style:normal;font-size:14px}
+.xq-sch .fill{fill:currentColor}
+.xq-sch .fillbg{fill:#fff}
+.xq-continue{margin:1em 0 2em}
+.xq-continue button[disabled]{opacity:.5;cursor:not-allowed}
+.xq-quiz-head{margin-top:2em;border-top:1px solid rgba(127,127,127,.5);padding-top:1em}
+.xq-unit-intro{font-style:italic}
+.xq-unit-later{opacity:.65}
+.xq-unit-done strong{font-size:1.3em}
