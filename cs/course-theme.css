@@ -1,0 +1,50 @@
+/* Course additions to the same CAT-SOOP base theme used by example.html. */
+.xq-meta{text-align:center;margin:0 0 1.6em;line-height:1.65}
+.xq-topics{font-size:.875em;margin-top:.35em}
+.xq-tag{color:var(--cs-base-bg-color);text-decoration:none}
+.xq-back{text-align:center;font-style:italic;margin:1.4em 0 .5em}
+.xq-part{margin:1.6em 0 .6em}
+.xq-answers{margin:0;padding:0;border:0;background:transparent}
+.xq-nav{display:flex;justify-content:space-between;align-items:center;gap:1em;margin:2em 0 1em;font-style:italic;text-align:center}
+.xq-nav>span{flex:1}.xq-nav>span:first-child{text-align:left}.xq-nav>span:last-child{text-align:right}
+textarea,input[type=text]{max-width:100%;box-sizing:border-box}
+.question{overflow-wrap:anywhere}
+.question [id$="_buttons"]{display:inline-flex;flex-wrap:wrap;gap:4px}
+.question [id$="_score_display"]{margin-left:4px}
+.nsubmits_left{font-size:1em}
+.xq-pre,.xq-expl{background:rgba(127,127,127,0.13);padding:8px 10px;border-radius:4px;white-space:pre-wrap;
+  font-family:Menlo,Consolas,Courier,"Courier New",monospace;font-size:0.9em;margin:6px 0}
+textarea{font-family:Menlo,Consolas,Courier,"Courier New",monospace}
+.xq-note{color:#a05a00}
+.xq-list li{margin:0.25em 0}
+.xq-src{opacity:0.7;font-size:0.85em}
+.xq-h{margin-top:1.4em}
+table{border-collapse:collapse;margin:0.6em 0}
+table th,table td{border:1px solid rgba(127,127,127,0.6);padding:4px 10px;text-align:left;vertical-align:top}
+table th{background:rgba(127,127,127,0.12)}
+table.xq-plain td,table.xq-plain th{border:none}
+table.xq-bits{border-collapse:collapse;margin:0.8em 0;font-family:Consolas,Inconsolata,monospace;font-size:0.9em}
+table.xq-bits td{border:1px solid rgba(127,127,127,0.8);width:1.35em;height:1.6em;text-align:center;padding:0}
+table.xq-bits tr.xq-lbl td,table.xq-bits tr.xq-idx td{border:none;font-family:inherit;font-size:0.8em;opacity:0.85}
+table.xq-bits tr.xq-lbl td{border-bottom:2px solid rgba(127,127,127,0.6);font-family:system-ui,sans-serif}
+table.xq-bits td.s{background:rgba(80,200,230,0.28)} table.xq-bits td.e{background:rgba(110,210,110,0.28)}
+table.xq-bits td.f{background:rgba(240,120,120,0.25)} table.xq-bits td.g{background:rgba(127,127,127,0.25)}
+@media(max-width:1000px){
+ .cs_body{padding-left:18px;padding-right:18px}
+ .question{box-sizing:border-box;width:100%;padding:14px;margin:20px 0}
+ .xq-meta{font-size:.9em}.xq-nav{flex-wrap:wrap;font-size:.9em}
+ .cs_content_header{font-size:1.8rem;overflow-wrap:anywhere}
+ table.xq-bits{font-size:clamp(.55rem,2.2vw,.9rem);width:100%;table-layout:fixed}
+ table.xq-bits td{width:auto}
+}
+
+/* Keep long conceptual choices readable and their whole label clickable. */
+.question [role=radiogroup]{margin-top:12px}
+.question [role=radiogroup]>div{display:flex;align-items:baseline;gap:8px}
+.question [role=radiogroup] input{flex:none}
+.question [role=radiogroup] label{cursor:pointer;flex:1}
+
+/* Figures cropped from the exam PDFs: keep them on white so circuits read in dark mode. */
+img.xq-fig{display:block;max-width:100%;height:auto;margin:.8em auto;background:#fff;padding:6px;border-radius:6px;box-sizing:border-box}
+img.xq-fig.xq-key{outline:2px solid rgba(220,60,60,.5)}
+.xq-part h3{margin-top:1.8em}

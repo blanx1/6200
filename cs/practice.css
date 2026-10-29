@@ -1,0 +1,40 @@
+/* Native CAT-SOOP colors and typography, arranged around concepts and mastery. */
+#xq-practice{margin-top:1.5em}
+.xq-progress-overview{border:1px solid #888;border-radius:10px;padding:20px;margin:24px 0}
+.xq-progress-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}
+.xq-progress-overview .xq-progress-heading strong{font-size:1.75em}
+.xq-progress-heading span{font-variant-numeric:tabular-nums}
+#xq-practice progress,#xq-problem-progress progress{display:block;width:100%;height:12px;border:0;border-radius:3px;overflow:hidden;background:#ddd;accent-color:var(--cs-base-bg-color)}
+progress::-webkit-progress-bar{background:#ddd}progress::-webkit-progress-value{background:var(--cs-base-bg-color)}progress::-moz-progress-bar{background:var(--cs-base-bg-color)}
+.xq-progress-note,.xq-source{font-size:.85em;color:#666}
+.xq-progress-overview .xq-progress-note{margin-bottom:0}
+.xq-concept-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:28px 0}
+.xq-concept-card{border:1px solid #999;border-radius:10px;padding:20px;display:flex;flex-direction:column}
+.xq-concept-card h2{font-size:1.25rem;margin:0 0 12px}
+.xq-concept-card p{margin:0 0 18px;flex:1}
+.xq-concept-count{display:flex;justify-content:space-between;gap:8px;margin:8px 0 14px;font-size:.85em}
+.xq-concept-count span{color:#666}
+.xq-practice-filters{display:flex;flex-wrap:wrap;gap:16px;align-items:end;margin-top:28px}
+.xq-practice-filters label{display:flex;flex-direction:column;gap:6px;font-size:.9em}
+.xq-practice-filters label:last-child{flex:1;min-width:200px}
+.xq-practice-filters input,.xq-practice-filters select{font:inherit;padding:8px;border:1px solid #888;border-radius:4px;box-sizing:border-box;width:100%;background:#fff;color:#222}
+#xq-filter-count{font-size:.85em;color:#666}
+.xq-practice-row{margin:20px 0;border:1px solid #999;border-radius:10px;padding:18px}
+.xq-row-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.xq-row-heading h3{font-size:1.15rem;margin:0}.xq-row-heading>span{white-space:nowrap;font-size:.8em}
+.xq-source{margin:8px 0 12px}
+.xq-question-list{list-style:none;padding:0;margin:0}
+.xq-question-list li+li{border-top:1px solid #ddd}
+.xq-question-link{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:9px 0;color:inherit!important;font-size:.9em}
+.xq-question-link>span:first-child{overflow-wrap:anywhere}.xq-question-link b{display:inline-block;margin-right:8px}
+.xq-status-label{font-size:.8rem;color:#666;white-space:nowrap}
+.xq-status-label.correct,.xq-status-label.reviewed,.correct>.xq-status-label,.reviewed>.xq-status-label{color:#247a45;font-weight:600}
+.xq-status-label.attempted,.attempted>.xq-status-label{color:#8a5b00}
+.xq-question-progress{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.8em;margin-bottom:10px}
+.xq-review{font-size:.9em;border-top:1px solid #bbb;padding-top:10px;margin-top:12px}
+.xq-review input{margin-right:7px}
+#xq-problem-progress{padding:14px 0;margin:12px 0 20px;font-size:.85em}
+.xq-context-links{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}
+.question{scroll-margin-top:65px}.question:target{outline:2px solid var(--cs-base-bg-color);outline-offset:4px}
+.xq-empty{padding:24px 0}
+@media(max-width:650px){.xq-concept-grid{grid-template-columns:1fr}.xq-progress-overview,.xq-concept-card{padding:16px}.xq-question-link{flex-direction:column;gap:4px}.xq-row-heading{flex-wrap:wrap}.xq-progress-heading{flex-wrap:wrap}.xq-question-progress{align-items:start;flex-wrap:wrap}.xq-context-links{flex-wrap:wrap}}
